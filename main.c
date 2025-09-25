@@ -8,8 +8,6 @@ typedef struct node
 } node_t;
 
 node_t *iterate(node_t *head, int index) {
-    if (head == NULL) return NULL;
-
     node_t *current = head;
 
     int current_index = 0;
@@ -22,11 +20,25 @@ node_t *iterate(node_t *head, int index) {
     return current;
 }
 
+int find(node_t *head, int value) {
+    node_t *current = head;
+
+    int current_index = 0;
+
+    while (current->link != NULL) {
+        if (current->data == value) return current_index;
+        current = current->link;
+        current_index++;
+    }
+
+    return -1;
+}
+
 void add_node(node_t **head, int index, int data) {
     node_t *current = iterate(*head, index);
 
     if (index == 0) {
-        node_t *new = malloc(sizeof(node_t));
+        node_t *new = (node_t*)malloc(sizeof(node_t));
 
         new->data = data;
         new->link = *head;
@@ -34,7 +46,7 @@ void add_node(node_t **head, int index, int data) {
     }
     else {
         node_t *previous = iterate(*head, index-1);
-        node_t *new = malloc(sizeof(node_t));
+        node_t *new = (node_t*)malloc(sizeof(node_t));
 
         new->data = data;
         
@@ -93,58 +105,71 @@ void free_list(node_t *head) {
     }
 }
 
-node_t *quicksort(node_t *head) {
-    if (head == NULL || head->link == NULL) return head;
+node_t *partition(node_t *head) {
+    if (head->link == NULL) return head;
 
     node_t *current = head->link;
-    node_t *l_head = malloc(sizeof(node_t));
-    node_t *r_head = malloc(sizeof(node_t));
+    node_t *l_head = (node_t*)malloc(sizeof(node_t));
+    l_head->data = -1;
+    node_t *r_head = (node_t*)malloc(sizeof(node_t));
+    r_head->data = -1;
 
     while (current != NULL) {
         if (current->data <= head->data) {
-            if (l_head->data == 0) l_head->data = current->data;
+            if (l_head->data == -1) l_head->data = current->data;
             else {
                 node_t *last = iterate(l_head, -1);
-                node_t *new = malloc(sizeof(node_t));
+                node_t *new = (node_t*)malloc(sizeof(node_t));
 
                 new->data = current->data;
-                new->link = NULL;
 
                 last->link = new;
             }
         }
         else {
-            if (r_head->data == 0) r_head->data = current->data;
+            if (r_head->data == -1) r_head->data = current->data;
             else {
-                node_t *last = iterate(l_head, -1);
-                node_t *new = malloc(sizeof(node_t));
+                node_t *last = iterate(r_head, -1);
+                node_t *new = (node_t*)malloc(sizeof(node_t));
 
                 new->data = current->data;
-                new->link = NULL;
 
                 last->link = new;
             }
         }
+
         current = current->link;
     }
 
-    node_t *l_sorted = quicksort(l_head);
-    node_t *r_sorted = quicksort(r_head);
+    node_t *l_sorted = partition(l_head);
+    node_t *r_sorted = partition(r_head);
 
     iterate(l_sorted, -1)->link = head;
     head->link = r_sorted;
+
     return l_sorted;
 }
 
-int main() {
-    node_t *head = malloc(sizeof(node_t));
+node_t *quicksort(node_t *head) {
+    head = partition(head);
 
-    int arr[] = {4,2,3,7,5};
+    while (find(head, -1) != -1) {
+        pop_node(&head, find(head, -1));
+    }
+
+    return head;
+}
+
+int main() {
+    int arr[] = {4,7,3,2,9};
     int length = sizeof(arr)/sizeof(arr[0]);
+
+    node_t *head = (node_t*)malloc(sizeof(node_t));
 
     convert(head, arr, length);
 
-    print(quicksort(head));
+    head = quicksort(head);
+    print(head);
 
     free_list(head);
     return 0;
